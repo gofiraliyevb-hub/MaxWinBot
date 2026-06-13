@@ -6,7 +6,7 @@ from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 # Bot sozlamalari
-TOKEN = "8919110226:AAGQBRaqPOmS1IXXhur..."
+TOKEN = "8919110226:AAEgIvnvVWBeeF0LD1fCpU_x-024N4dX1cY"
 KANAL_LINK = "@MaxWin_24h"
 ADMIN_ID = 8792881948  # Sizning ID
 
