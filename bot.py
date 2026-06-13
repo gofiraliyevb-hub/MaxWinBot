@@ -5,7 +5,7 @@ from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-# Loggingni yoqamiz (xatolarni logda ko'rish uchun)
+# Loglarni sozlash
 logging.basicConfig(level=logging.INFO)
 
 TOKEN = "8919110226:AAEgIvnvVWBeeF0LD1fCpU_x-024N4dX1cY"
@@ -22,56 +22,46 @@ PLATFORMS = {
     "888Starz": {"promo": "Graf777", "link": "https://top100bonus.com/L?tag=d_4866577m_98890c_&site=4866577&ad=98890"}
 }
 
+async def is_subscribed(user_id):
+    try:
+        member = await bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
+        return member.status != 'left'
+    except: return False
+
 @dp.message(Command("start"))
 async def start(msg: Message):
+    if not await is_subscribed(msg.from_user.id):
+        await msg.answer(f"❌ Botdan foydalanish uchun kanalimizga obuna bo‘ling: {CHANNEL_ID}")
+        return
+    
     builder = InlineKeyboardBuilder()
     for p in PLATFORMS:
         builder.button(text=f"🎰 {p}", callback_data=f"sel_{p}")
     builder.adjust(2)
-    
-    await msg.answer(
-        "✨ **MaxWin Signal Botiga xush kelibsiz!** ✨\n\n"
-        "Bizning yopiq signal kanalimizga qo'shilish uchun quyidagi platformalardan birini tanlang va ro'yxatdan o'ting.",
-        reply_markup=builder.as_markup(),
-        parse_mode="Markdown"
-    )
+    await msg.answer("👋 Xush kelibsiz! Signal olish uchun platformani tanlang:", reply_markup=builder.as_markup())
 
 @dp.callback_query(F.data.startswith("sel_"))
 async def sel_platform(call: CallbackQuery):
     p = call.data.split("_")[1]
     info = PLATFORMS[p]
-    await call.message.answer(
-        f"✅ **{p} tanlandi!**\n\n"
-        f"1️⃣ Link orqali o'ting: {info['link']}\n"
-        f"2️⃣ Ro'yxatdan o'tishda ushbu promo kodni kiriting: `{info['promo']}`\n\n"
-        "3️⃣ Tayyor bo'lgach, akkaunt ID raqamingizni shu yerga yuboring:",
-        parse_mode="Markdown"
-    )
+    await call.message.answer(f"✅ {p} tanlandi!\n\n📌 Ro‘yxatdan o‘tish:\nLink: {info['link']}\nPromo: `{info['promo']}`\n\nID raqamingizni yuboring:")
 
-@dp.message(F.text.regexp(r'\d{5,12}'))
+@dp.message(F.text.regexp(r'\d+'))
 async def get_id(msg: Message):
-    await bot.send_message(
-        ADMIN_ID, 
-        f"🔔 **Yangi talabnoma!**\n\n"
-        f"👤 Foydalanuvchi: @{msg.from_user.username or 'Yashirin'}\n"
-        f"🆔 ID: `{msg.text}`",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"app_{msg.from_user.id}")]
-        ]),
-        parse_mode="Markdown"
-    )
-    await msg.answer("⏳ **ID qabul qilindi.** Admin tekshiruvidan o'tgach sizga xabar yuboramiz!")
+    await bot.send_message(ADMIN_ID, f"🔔 ID talabnomasi: {msg.text}\nUser: @{msg.from_user.username}",
+                           reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                               [InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"app_{msg.from_user.id}")]
+                           ]))
+    await msg.answer("⏳ ID yuborildi. Admin tasdiqlashini kuting...")
 
 @dp.callback_query(F.data.startswith("app_"))
 async def approve(call: CallbackQuery):
-    user_id = call.data.split("_")[1]
-    await bot.send_message(user_id, "🎉 **Tabriklaymiz!** Sizga signal olishga ruxsat berildi.")
+    uid = call.data.split("_")[1]
+    await bot.send_message(uid, "🎉 Ruxsat berildi! Signal: *Aviator 1.5x kuting*")
     await call.message.edit_text("✅ Tasdiqlandi!")
 
 async def main():
-    # Eski xatolarni tozalash
     await bot.delete_webhook(drop_pending_updates=True)
-    # Botni ishga tushirish
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
