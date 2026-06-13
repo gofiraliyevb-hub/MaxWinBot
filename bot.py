@@ -1,97 +1,59 @@
-import logging
-import random
 import asyncio
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
+from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-# Bot sozlamalari
 TOKEN = "8919110226:AAEgIvnvVWBeeF0LD1fCpU_x-024N4dX1cY"
-KANAL_LINK = "@MaxWin_24h"
-ADMIN_ID = 8792881948  # Sizning ID
+ADMIN_ID = 8792881948
+CHANNEL_ID = "@MaxWin_24h"
 
-logging.basicConfig(level=logging.INFO)
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Admin nazorati uchun yordamchi funksiya
-async def notify_admin(message: types.Message, title: str):
-    try:
-        await bot.send_message(
-            ADMIN_ID, 
-            f"🔔 {title}\n👤 Ismi: {message.from_user.full_name}\n🆔 ID: {message.from_user.id}\n🔗 User: @{message.from_user.username}"
-        )
-    except:
-        pass
-
-# Obunani tekshirish funksiyasi
-async def check_sub(user_id: int, channel: str) -> bool:
-    try:
-        member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
-        if member.status in ["member", "administrator", "creator"]:
-            return True
-        return False
-    except Exception:
-        return False
-
-# Olma kartasini yaratish
-def generate_apple_map():
-    grid_rows = []
-    for _ in range(5):
-        row_items = ["🍎"] + ["⬜"] * 4
-        random.shuffle(row_items)
-        grid_rows.append(" ".join(row_items))
-    grid = ""
-    for index, row in enumerate(reversed(grid_rows)):
-        level_num = 5 - index
-        grid += f"{level_num}️⃣  |  {row}\n"
-    return grid
+PLATFORMS = {
+    "1Win": {"promo": "Betgo777", "link": "https://one-vv3184.com/?p=3l4v"},
+    "Linebet": {"promo": "lin_209014", "link": "https://lb-aff.com/L?tag=d_4753770m_22611c_&site=4753770&ad=22611"},
+    "1xBet": {"promo": "AQSH100", "link": "https://refpa86112.pro/L?tag=s_5212059m_355c_&site=5212059&ad=355"},
+    "888Starz": {"promo": "Graf777", "link": "https://top100bonus.com/L?tag=d_4866577m_98890c_&site=4866577&ad=98890"}
+}
 
 @dp.message(Command("start"))
-async def start_cmd(message: types.Message):
-    # Adminni xabardor qilish
-    await notify_admin(message, "Yangi foydalanuvchi /start bosdi")
-    
-    user_id = message.from_user.id
-    is_member = await check_sub(user_id, KANAL_LINK)
-    
-    if is_member:
-        await message.answer(f"🍏 Xush kelibsiz, {message.from_user.full_name}!\n\nID raqamingizni kiriting:")
-    else:
-        builder = InlineKeyboardBuilder()
-        builder.row(types.InlineKeyboardButton(text="📢 Kanalga obuna bo'lish", url=f"https://t.me/{KANAL_LINK.replace('@', '')}"))
-        builder.row(types.InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_subscription"))
-        await message.answer("⚠️ Botdan foydalanish uchun kanalga a'zo bo'lishingiz majburiy!", reply_markup=builder.as_markup())
-
-@dp.callback_query(lambda c: c.data == "check_subscription")
-async def check_callback(callback: types.CallbackQuery):
-    if await check_sub(callback.from_user.id, KANAL_LINK):
-        await callback.message.delete()
-        await callback.message.answer("Rahmat! ID raqamingizni kiriting:")
-    else:
-        await callback.answer("❌ Siz hali kanalga a'zo bo'lmadingiz!", show_alert=True)
-
-@dp.message(lambda message: message.text.isdigit())
-async def handle_id(message: types.Message):
-    # Adminni xabardor qilish
-    await notify_admin(message, f"Foydalanuvchi ID yubordi: {message.text}")
-    
+async def start(msg: Message):
     builder = InlineKeyboardBuilder()
-    builder.row(types.InlineKeyboardButton(text="🍎 Olma Signali Olish", callback_data="get_apple_signal"))
-    await message.answer(f"✅ ID tasdiqlandi: **{message.text}**\n\nTizim tayyor!", reply_markup=builder.as_markup())
-
-@dp.callback_query(lambda c: c.data == "get_apple_signal")
-async def apple_signal_callback(callback: types.CallbackQuery):
-    apple_map = generate_apple_map()
-    builder = InlineKeyboardBuilder()
-    builder.row(types.InlineKeyboardButton(text="🔄 Qaytadan signal olish", callback_data="get_apple_signal"))
-    await callback.message.edit_text(
-        f"🔔 **APPLE OF FORTUNE** 🔔\n\n{apple_map}\n⚠️ *Faqat olma bo'ylab yuring!*",
-        reply_markup=builder.as_markup()
+    for p in PLATFORMS:
+        builder.button(text=f"🎰 {p}", callback_data=f"sel_{p}")
+    builder.adjust(2)
+    
+    await msg.answer(
+        "✨ **MaxWin Signal Botiga xush kelibsiz!** ✨\n\n"
+        "Bizning yopiq signal kanalimizga qo'shilish uchun quyidagi platformalardan birini tanlang va ro'yxatdan o'ting.",
+        reply_markup=builder.as_markup(),
+        parse_mode="Markdown"
     )
 
-async def main():
-    await dp.start_polling(bot)
+@dp.callback_query(F.data.startswith("sel_"))
+async def sel_platform(call: CallbackQuery):
+    p = call.data.split("_")[1]
+    info = PLATFORMS[p]
+    await call.message.answer(
+        f"✅ **{p} tanlandi!**\n\n"
+        f"1️⃣ Link orqali o'ting: {info['link']}\n"
+        f"2️⃣ Ro'yxatdan o'tishda ushbu promo kodni kiriting: `{info['promo']}`\n\n"
+        "3️⃣ Tayyor bo'lgach, akkaunt ID raqamingizni shu yerga yuboring:",
+        parse_mode="Markdown"
+    )
 
-if __name__ == "__main__":
-    asyncio.run(main())
+@dp.message(F.text.regexp(r'\d{5,12}')) # ID raqam ekanligini tekshiradi
+async def get_id(msg: Message):
+    await bot.send_message(
+        ADMIN_ID, 
+        f"🔔 **Yangi talabnoma!**\n\n"
+        f"👤 Foydalanuvchi: @{msg.from_user.username or 'Yashirin'}\n"
+        f"🆔 ID: `{msg.text}`",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"app_{msg.from_user.id}")]
+        ]),
+        parse_mode="Markdown"
+    )
+    await msg.answer("⏳ **ID qabul qilindi.** Admin tekshiruvidan o'tgach sizga xabar yuboramiz!")
