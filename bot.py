@@ -1,8 +1,12 @@
 import asyncio
+import logging
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+# Loggingni yoqamiz (xatolarni logda ko'rish uchun)
+logging.basicConfig(level=logging.INFO)
 
 TOKEN = "8919110226:AAEgIvnvVWBeeF0LD1fCpU_x-024N4dX1cY"
 ADMIN_ID = 8792881948
@@ -44,7 +48,7 @@ async def sel_platform(call: CallbackQuery):
         parse_mode="Markdown"
     )
 
-@dp.message(F.text.regexp(r'\d{5,12}')) # ID raqam ekanligini tekshiradi
+@dp.message(F.text.regexp(r'\d{5,12}'))
 async def get_id(msg: Message):
     await bot.send_message(
         ADMIN_ID, 
@@ -57,3 +61,18 @@ async def get_id(msg: Message):
         parse_mode="Markdown"
     )
     await msg.answer("⏳ **ID qabul qilindi.** Admin tekshiruvidan o'tgach sizga xabar yuboramiz!")
+
+@dp.callback_query(F.data.startswith("app_"))
+async def approve(call: CallbackQuery):
+    user_id = call.data.split("_")[1]
+    await bot.send_message(user_id, "🎉 **Tabriklaymiz!** Sizga signal olishga ruxsat berildi.")
+    await call.message.edit_text("✅ Tasdiqlandi!")
+
+async def main():
+    # Eski xatolarni tozalash
+    await bot.delete_webhook(drop_pending_updates=True)
+    # Botni ishga tushirish
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
