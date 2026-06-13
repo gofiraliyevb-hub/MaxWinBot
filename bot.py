@@ -7,7 +7,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 logging.basicConfig(level=logging.INFO)
 
-TOKEN = "8919110226:AAHuZu0oqnGs9Bcd6p-LA02mWHGacK8AjHIY"
+TOKEN = "8919110226:AAETbsb5prmY2LP3ZWZJrSuFsI5v5_I6nOI"
 ADMIN_ID = 8792881948
 CHANNEL_ID = "@MaxWin_24h"
 
